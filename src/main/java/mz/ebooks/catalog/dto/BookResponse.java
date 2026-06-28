@@ -1,5 +1,6 @@
 package mz.ebooks.catalog.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -19,18 +20,27 @@ public class BookResponse {
     private String slug;
     private String description;
     private String isbn;
+
+    @JsonProperty("coverImageUrl")
     private String coverImage;
+
     private String[] previewImages;
     private LocalDateTime publishedAt;
     private String language;
+
+    @JsonProperty("pageCount")
     private Integer pages;
+
     private String publisher;
     private String edition;
     private String type;
     private BigDecimal price;
     private boolean subscriptionOnly;
     private String fileKey;
+
+    @JsonProperty("ebookSizeBytes")
     private Long fileSizeBytes;
+
     private String format;
     private int stockQuantity;
     private BigDecimal weight;
@@ -39,7 +49,10 @@ public class BookResponse {
     private boolean isFeatured;
     private String status;
     private BigDecimal averageRating;
+
+    @JsonProperty("totalReviews")
     private int reviewCount;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     public static final String EXCHANGE_NAME = "ebooks.events";
-    public static final String QUEUE_ORDER_COMPLETED = "catalog.order.completed";
+    public static final String QUEUE_ORDER_PAID = "catalog.order.paid";
     public static final String QUEUE_ORDER_CANCELLED = "catalog.order.cancelled";
 
     @Bean
@@ -21,8 +21,8 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue orderCompletedQueue() {
-        return QueueBuilder.durable(QUEUE_ORDER_COMPLETED).build();
+    public Queue orderPaidQueue() {
+        return QueueBuilder.durable(QUEUE_ORDER_PAID).build();
     }
 
     @Bean
@@ -31,10 +31,10 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding orderCompletedBinding() {
-        return BindingBuilder.bind(orderCompletedQueue())
+    public Binding orderPaidBinding() {
+        return BindingBuilder.bind(orderPaidQueue())
                 .to(ebooksEventsExchange())
-                .with("order.completed");
+                .with("commerce.order.paid");
     }
 
     @Bean
