@@ -1,0 +1,6 @@
+ALTER TABLE books
+  ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED';
+
+CREATE INDEX IF NOT EXISTS idx_books_status ON books(status);
+
+UPDATE books SET status = 'PUBLISHED' WHERE is_active = TRUE;
