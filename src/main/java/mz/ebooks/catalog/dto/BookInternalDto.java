@@ -18,6 +18,7 @@ public class BookInternalDto {
     private String type;
     private String format;
     private String fileKey;
+    private Integer totalPages;
     private boolean subscriptionOnly;
     private boolean active;
     private String status;

@@ -141,10 +141,12 @@ public class BookController {
     // ───────── Approval workflow ─────────
 
     @PostMapping("/{id}/submit")
-    @Operation(summary = "Submit a DRAFT book for admin review")
+    @Operation(summary = "Submit a DRAFT book for admin review (ADMIN only)")
     public ResponseEntity<BookResponse> submitForReview(
             @PathVariable UUID id,
-            @RequestHeader("X-User-Id") String userId) {
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-User-Role") String userRole) {
+        requireAdmin(userRole);
         return ResponseEntity.ok(bookService.submitForReview(id, userId));
     }
 

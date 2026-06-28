@@ -29,6 +29,7 @@ public class UpdateBookRequest {
     private List<String> tags;
 
     private String isbn;
+    private String coverImage;
     @JsonAlias("pageCount")
     private Integer pages;
     private String publisher;

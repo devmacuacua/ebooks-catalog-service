@@ -73,6 +73,7 @@ public class BookService {
                 .type(book.getType())
                 .format(book.getFormat())
                 .fileKey(book.getFileKey())
+                .totalPages(book.getPages())
                 .subscriptionOnly(book.isSubscriptionOnly())
                 .active(book.isActive())
                 .status(book.getStatus())
@@ -200,6 +201,7 @@ public class BookService {
         if (req.getType() != null) book.setType(req.getType());
         if (req.getPrice() != null) book.setPrice(req.getPrice());
         if (req.getIsbn() != null) book.setIsbn(req.getIsbn());
+        if (req.getCoverImage() != null) book.setCoverImage(req.getCoverImage());
         if (req.getPages() != null) book.setPages(req.getPages());
         if (req.getPublisher() != null) book.setPublisher(req.getPublisher());
         if (req.getEdition() != null) book.setEdition(req.getEdition());
