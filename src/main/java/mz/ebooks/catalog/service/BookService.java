@@ -123,7 +123,8 @@ public class BookService {
     public BookResponse rejectBook(UUID id, String reason) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Book not found: " + id));
-        book.setStatus("DRAFT");
+        book.setStatus("REJECTED");
+        book.setRejectionReason(reason);
         book = bookRepository.save(book);
 
         Map<String, Object> evt = new HashMap<>();
@@ -135,10 +136,82 @@ public class BookService {
         return toBookResponse(book);
     }
 
+    public BookResponse reviewBook(UUID id, String action, String parecer) {
+        if ("APPROVE".equalsIgnoreCase(action)) {
+            return approveBook(id);
+        } else if ("REJECT".equalsIgnoreCase(action)) {
+            return rejectBook(id, parecer != null ? parecer : "");
+        }
+        throw new IllegalArgumentException("action must be APPROVE or REJECT");
+    }
+
     @Transactional(readOnly = true)
     public Page<BookSummary> listPendingReview(Pageable pageable) {
         return bookRepository.findByStatus("PENDING_REVIEW", pageable)
                 .map(this::toBookSummary);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BookResponse> listAllSubmissions(String statusFilter, Pageable pageable) {
+        Page<Book> page;
+        if (statusFilter != null && !statusFilter.isBlank()) {
+            page = bookRepository.findByStatus(statusFilter, pageable);
+        } else {
+            page = bookRepository.findAllSubmissions(pageable);
+        }
+        return page.map(this::toBookResponse);
+    }
+
+    // ───────── Partner submission ─────────
+
+    public BookResponse createPartnerSubmission(CreateBookRequest req, UUID partnerId, String partnerName) {
+        Set<Author> authors = resolveAuthors(req.getAuthorIds());
+        Set<Category> categories = resolveCategories(req.getCategoryIds());
+        Set<Tag> tags = resolveTags(req.getTags());
+
+        String rawSlug = (req.getSlug() != null && !req.getSlug().isBlank())
+                ? req.getSlug() : req.getTitle();
+        String slug = generateUniqueSlug(rawSlug, null);
+
+        int pages = req.getPages() != null ? req.getPages()
+                : (req.getPageCount() != null ? req.getPageCount() : 0);
+
+        Book book = Book.builder()
+                .title(req.getTitle())
+                .slug(slug)
+                .description(req.getDescription())
+                .isbn(req.getIsbn())
+                .language(req.getLanguage() != null ? req.getLanguage() : "pt")
+                .pages(pages)
+                .publisher(req.getPublisher())
+                .type(req.getType())
+                .price(req.getPrice())
+                .subscriptionOnly(false)
+                .stockQuantity(req.getStockQuantity() != null ? req.getStockQuantity() : 0)
+                .isActive(false)
+                .status("PENDING_REVIEW")
+                .partnerId(partnerId)
+                .partnerName(partnerName)
+                .submittedAt(java.time.LocalDateTime.now())
+                .authors(authors)
+                .categories(categories)
+                .tags(tags)
+                .build();
+
+        book = bookRepository.save(book);
+
+        Map<String, Object> evt = new HashMap<>();
+        evt.put("bookId", book.getId().toString());
+        evt.put("title", book.getTitle());
+        evt.put("partnerId", partnerId.toString());
+        eventPublisher.publishBookUpdated(evt);
+
+        return toBookResponse(book);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BookResponse> listPartnerSubmissions(UUID partnerId, Pageable pageable) {
+        return bookRepository.findByPartnerId(partnerId, pageable).map(this::toBookResponse);
     }
 
     // ───────── Create ─────────
@@ -389,6 +462,10 @@ public class BookService {
                 .isActive(book.isActive())
                 .isFeatured(book.isFeatured())
                 .status(book.getStatus())
+                .rejectionReason(book.getRejectionReason())
+                .partnerId(book.getPartnerId())
+                .partnerName(book.getPartnerName())
+                .submittedAt(book.getSubmittedAt())
                 .averageRating(book.getAverageRating())
                 .reviewCount(book.getReviewCount())
                 .createdAt(book.getCreatedAt())

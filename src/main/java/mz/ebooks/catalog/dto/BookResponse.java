@@ -48,6 +48,11 @@ public class BookResponse {
     private boolean isActive;
     private boolean isFeatured;
     private String status;
+    @JsonProperty("parecer")
+    private String rejectionReason;
+    private UUID partnerId;
+    private String partnerName;
+    private LocalDateTime submittedAt;
     private BigDecimal averageRating;
 
     @JsonProperty("totalReviews")

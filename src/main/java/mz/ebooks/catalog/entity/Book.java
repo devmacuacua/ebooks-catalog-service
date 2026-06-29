@@ -95,10 +95,22 @@ public class Book {
     @Builder.Default
     private boolean isFeatured = false;
 
-    /** DRAFT → PENDING_REVIEW → PUBLISHED */
+    /** DRAFT → PENDING_REVIEW → PUBLISHED | REJECTED */
     @Column(nullable = false, length = 20)
     @Builder.Default
     private String status = "PUBLISHED";
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "partner_id", columnDefinition = "uuid")
+    private UUID partnerId;
+
+    @Column(name = "partner_name", length = 255)
+    private String partnerName;
+
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
 
     @Column(name = "average_rating", precision = 3, scale = 2)
     @Builder.Default

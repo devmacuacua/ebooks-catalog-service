@@ -50,4 +50,11 @@ public interface BookRepository extends JpaRepository<Book, UUID>, JpaSpecificat
     boolean existsBySlugAndIdNot(String slug, UUID id);
 
     Page<Book> findByStatus(String status, Pageable pageable);
+
+    Page<Book> findByPartnerId(UUID partnerId, Pageable pageable);
+
+    Page<Book> findByPartnerIdAndStatus(UUID partnerId, String status, Pageable pageable);
+
+    @Query("SELECT b FROM Book b WHERE b.status IN ('PENDING_REVIEW', 'REJECTED') ORDER BY b.submittedAt DESC")
+    Page<Book> findAllSubmissions(Pageable pageable);
 }

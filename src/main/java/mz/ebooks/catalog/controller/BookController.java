@@ -169,13 +169,76 @@ public class BookController {
     }
 
     @PostMapping("/{id}/reject")
-    @Operation(summary = "Reject a book back to DRAFT (ADMIN only)")
+    @Operation(summary = "Reject a book (ADMIN only)")
     public ResponseEntity<BookResponse> rejectBook(
             @PathVariable UUID id,
             @RequestBody Map<String, String> body,
             @RequestHeader("X-User-Role") String userRole) {
         requireAdmin(userRole);
         return ResponseEntity.ok(bookService.rejectBook(id, body.getOrDefault("reason", "")));
+    }
+
+    // ───────── Partner submission ─────────
+
+    @PostMapping("/partner-submissions")
+    @Operation(summary = "Partner submits a new book for admin review")
+    public ResponseEntity<BookResponse> createPartnerSubmission(
+            @Valid @RequestBody CreateBookRequest req,
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader(value = "X-Partner-Name", required = false) String partnerName) {
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).build();
+        }
+        try {
+            UUID partnerId = UUID.fromString(userId);
+            BookResponse response = bookService.createPartnerSubmission(req, partnerId, partnerName);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user ID format");
+        }
+    }
+
+    @GetMapping("/partner-submissions")
+    @Operation(summary = "List submissions by the authenticated partner")
+    public ResponseEntity<Page<BookResponse>> listPartnerSubmissions(
+            @RequestHeader("X-User-Id") String userId,
+            @PageableDefault(size = 20) Pageable pageable) {
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).build();
+        }
+        try {
+            UUID partnerId = UUID.fromString(userId);
+            return ResponseEntity.ok(bookService.listPartnerSubmissions(partnerId, pageable));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user ID format");
+        }
+    }
+
+    // ───────── Admin submissions ─────────
+
+    @GetMapping("/submissions")
+    @Operation(summary = "Admin: list all book submissions with optional status filter")
+    public ResponseEntity<Page<BookResponse>> listAllSubmissions(
+            @RequestHeader("X-User-Role") String userRole,
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 20) Pageable pageable) {
+        requireAdmin(userRole);
+        return ResponseEntity.ok(bookService.listAllSubmissions(status, pageable));
+    }
+
+    @PostMapping("/submissions/{id}/review")
+    @Operation(summary = "Admin: approve or reject a book submission")
+    public ResponseEntity<BookResponse> reviewSubmission(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body,
+            @RequestHeader("X-User-Role") String userRole) {
+        requireAdmin(userRole);
+        String action = body.get("action");
+        String parecer = body.getOrDefault("parecer", "");
+        if (action == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "action field is required (APPROVE or REJECT)");
+        }
+        return ResponseEntity.ok(bookService.reviewBook(id, action, parecer));
     }
 
     // ───────── Stock (internal) ─────────
